@@ -28,42 +28,11 @@ RUN apt-get update && \
     apt-get --purge remove -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev && \
     rm -rf /root/.cache/* && apt-get clean && apt-get autoremove -y
 
-# pip3 install requests && \
-# pip3 install lxml bs4 && \
-# apt-get install -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev cron supervisor && \
-# apt-get --purge remove -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev && \
-
-# /usr/local/lib/python3.6/site-packages/pandas/
-# 1.解决 pandas 数据插入问题。直接修改数据库驱动 sqlalchemy
-# 修改：statement.replace("INSERT INTO","INSERT IGNORE INTO")
-# /usr/local/lib/python3.6/site-packages/sqlalchemy/dialects/mysql/mysqldb.py
-# 增加了一个 IGNORE 参数。
-# 2.解决torndb在python3下面的问题：
-# http://blog.csdn.net/littlethunder/article/details/8917378
-# 3. 解决 type 问题，使用sed 进行替换。
-#  File "/usr/local/lib/python3.6/site-packages/torndb.py", line 260, in <module>
-#    CONVERSIONS[field_type] = [(FLAG.BINARY, str)] + CONVERSIONS[field_type]
-#  TypeError: can only concatenate list (not "type") to list
-
 RUN echo `date +%Y-%m-%d:%H:%M:%S` >> /etc/docker.build && \
     rm -f /etc/cron.daily/apt-compat /etc/cron.daily/dpkg /etc/cron.daily/passwd
-
-# sed -i -e 's/executemany(statement/executemany(statement.replace\("INSERT INTO","INSERT IGNORE INTO")/g' \
-#     /usr/local/lib/python3.6/site-packages/sqlalchemy/dialects/mysql/mysqldb.py && \
-#    sed -i -e 's/itertools\.izip/zip/g' \
-#    /usr/local/lib/python3.6/site-packages/torndb.py  && \
-#    sed -i -e 's/\+ CONVERSIONS\[field_type\]/\+ \[CONVERSIONS\[field_type\],bytes\]/g' \
-#    /usr/local/lib/python3.6/site-packages/torndb.py
 
 #增加语言utf-8
 ENV LANG=zh_CN.UTF-8
 ENV LC_CTYPE=zh_CN.UTF-8
 ENV LC_ALL=C
 ENV PYTHONPATH=/data
-
-#RUN pip3 install sklearn xlrd && apt-get install -y procps vim &&
-#    echo "set fileencodings=utf-8,ucs-bom,gb18030,gbk,gb2312,cp936" >> /etc/vim/vimrc && \
-#    echo "set termencoding=utf-8" >> /etc/vim/vimrc && \
-#    echo "set encoding=utf-8" >> /etc/vim/vimrc && apt-get clean
-
-
