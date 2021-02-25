@@ -29,11 +29,11 @@ ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
 # apt-get autoremove -y 删除没有用的依赖lib。减少镜像大小。1MB 也要节省。
 # apt-get --purge remove 软件包名称 , 删除已安装包（不保留配置文件)。
 RUN apt-get update && \
-    apt-get install -y gcc make axel default-libmysqlclient-dev libxml2-dev cron && \
+    apt-get install -y gcc make axel apt-utils default-libmysqlclient-dev libxml2-dev cron && \
     pip3 install mysqlclient sqlalchemy && \
     pip3 install numpy pandas  && \
     pip3 install tushare && \
-    apt-get --purge remove -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev && \
+    apt-get --purge remove -y gcc make axel apt-utils python3-dev default-libmysqlclient-dev libxml2-dev && \
     rm -rf /root/.cache/* && apt-get clean && apt-get autoremove -y
 
 #add cron sesrvice.
@@ -57,7 +57,7 @@ ADD jobs/cron.hourly /etc/cron.hourly
 ADD jobs/cron.daily /etc/cron.daily
 ADD jobs/cron.monthly /etc/cron.monthly
 
-RUN mkdir -p /data/logs && ls /data/stock/ && chmod 755 /data/stock/jobs/run_* &&  \
+RUN mkdir -p /data/logs && ls /data/ && chmod 755 /data/jobs/run_* &&  \
     chmod 755 /etc/cron.minutely/* && chmod 755 /etc/cron.hourly/* && \
     chmod 755 /etc/cron.daily/* && chmod 755 /etc/cron.monthly/*
 
