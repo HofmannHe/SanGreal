@@ -2,12 +2,6 @@ FROM docker.io/python:3.8-slim-buster
 
 WORKDIR /data
 
-#增加语言utf-8
-ENV LANG=zh_CN.UTF-8
-ENV LC_CTYPE=zh_CN.UTF-8
-ENV LC_ALL=C
-ENV PYTHONPATH=/data
-
 # https://opsx.alibaba.com/mirror
 # 使用阿里云镜像地址。修改debian apt 更新地址，pip 地址，设置时区。
 RUN echo  "deb http://mirrors.aliyun.com/debian/ buster main non-free contrib\n\
@@ -60,5 +54,21 @@ ADD jobs/cron.monthly /etc/cron.monthly
 RUN mkdir -p /data/logs && ls /data/ && chmod 755 /data/jobs/run_* &&  \
     chmod 755 /etc/cron.minutely/* && chmod 755 /etc/cron.hourly/* && \
     chmod 755 /etc/cron.daily/* && chmod 755 /etc/cron.monthly/*
+
+# 语言相关
+ENV LANG = zh_CN.UTF-8
+ENV LC_CTYPE = zh_CN.UTF-8
+ENV LC_ALL = C
+
+# python执行环境相关
+ENV PYTHONPATH = /data
+ENV PYTHONIOENCODING: utf-8
+
+# 数据库相关
+ENV DB_TYPE = mariadb
+ENV DB_HOST = database
+ENV DB_USER = root
+ENV DB_PASSWORD = password
+ENV DB_DATABASE = stock_data
 
 ENTRYPOINT ["supervisord","-n","-c","/data/supervisor/supervisord.conf"]
