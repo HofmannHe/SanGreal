@@ -1,7 +1,5 @@
 FROM docker.io/python:3.8-slim-buster
 
-WORKDIR /data
-
 # https://opsx.alibaba.com/mirror
 # 使用阿里云镜像地址。修改debian apt 更新地址，pip 地址，设置时区。
 RUN echo  "deb http://mirrors.aliyun.com/debian/ buster main non-free contrib\n\
@@ -23,11 +21,12 @@ ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
 # apt-get autoremove -y 删除没有用的依赖lib。减少镜像大小。1MB 也要节省。
 # apt-get --purge remove 软件包名称 , 删除已安装包（不保留配置文件)。
 RUN apt-get update && \
-    apt-get install -y gcc make axel apt-utils default-libmysqlclient-dev libxml2-dev cron && \
-    pip3 install mysqlclient sqlalchemy && \
+    apt-get install -y gcc make axel default-libmysqlclient-dev libxml2-dev cron && \
+    pip3 install pytest && \
+    pip3 install sqlalchemy psycopg2-binary mysqlclient && \
     pip3 install numpy pandas  && \
     pip3 install tushare && \
-    apt-get --purge remove -y gcc make axel apt-utils python3-dev default-libmysqlclient-dev libxml2-dev && \
+    apt-get --purge remove -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev && \
     rm -rf /root/.cache/* && apt-get clean && apt-get autoremove -y
 
 #add cron sesrvice.
@@ -44,12 +43,16 @@ PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin \n\
 30       17       1,10,20       *       *       /bin/run-parts /etc/cron.monthly \n" > /var/spool/cron/crontabs/root && \
     chmod 600 /var/spool/cron/crontabs/root
 
+WORKDIR /data
+
 ADD jobs /data/jobs
 
 ADD jobs/cron.minutely /etc/cron.minutely
 ADD jobs/cron.hourly /etc/cron.hourly
 ADD jobs/cron.daily /etc/cron.daily
 ADD jobs/cron.monthly /etc/cron.monthly
+
+ADD libs /data/libs
 
 RUN mkdir -p /data/logs && ls /data/ && chmod 755 /data/jobs/run_* &&  \
     chmod 755 /etc/cron.minutely/* && chmod 755 /etc/cron.hourly/* && \
@@ -62,13 +65,8 @@ ENV LC_ALL = C
 
 # python执行环境相关
 ENV PYTHONPATH = /data
-ENV PYTHONIOENCODING: utf-8
+ENV PYTHONIOENCODING = utf-8
 
-# 数据库相关
-ENV DB_TYPE = mariadb
-ENV DB_HOST = database
-ENV DB_USER = root
-ENV DB_PASSWORD = password
-ENV DB_DATABASE = stock_data
+# 数据库相关，默认值写在代码中，此处无需设置
 
-ENTRYPOINT ["supervisord","-n","-c","/data/supervisor/supervisord.conf"]
+#ENTRYPOINT ["supervisord","-n","-c","/data/supervisor/supervisord.conf"]
