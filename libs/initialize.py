@@ -7,6 +7,7 @@ import os
 import tushare as ts
 
 
+
 def set_token():
     if os.getenv("TUSHARE_TOKEN") is not None:
         ts.set_token(os.getenv("TUSHARE_TOKEN"))
