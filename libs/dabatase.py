@@ -32,7 +32,9 @@ class Database:
                      f"DB_HOST :{self._DB_HOST},"
                      f"DB_USER :{self._DB_USER},"
                      f"DB_DATABASE :{self._DB_DATABASE}")
-        self._DB_CONN_STR = f"{self._DB_TYPE}+{self._DB_ENGINE}://{self._DB_USER}:{self._DB_PASSWORD}@{self._DB_HOST}:{self._DB_PORT}/{self._DB_DATABASE}"
+        self._DB_CONN_STR = f"{self._DB_TYPE}+{self._DB_ENGINE}://" \
+                            f"{self._DB_USER}:{self._DB_PASSWORD}" \
+                            f"@{self._DB_HOST}:{self._DB_PORT}/{self._DB_DATABASE}"
 
         if not database_exists(self._DB_CONN_STR):
             create_database(self._DB_CONN_STR, encoding='utf8')
