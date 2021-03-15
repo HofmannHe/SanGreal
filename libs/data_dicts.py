@@ -36,16 +36,16 @@ class DataColumn:
 @nested_dataclass(frozen=True, eq=False)
 class DataTable:
     """数据类，用于存放表结构"""
-    name: str
+    description: str
     source: str
-    datatype: str
+    frequency: str
     columns: List[DataColumn]
 
 
 database_tables = {
-    'stock_daily_tushare': DataTable(name='股市日线数据',
+    'tushare_stock_daily': DataTable(description='股市日线数据',
                                      source='tushare',
-                                     datatype='每日数据',
+                                     frequency='daily',
                                      columns=[
                                          DataColumn('date', '日期', Date, is_primary_key=True),
                                          DataColumn('code', '代码', String(16), is_primary_key=True),

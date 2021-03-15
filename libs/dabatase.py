@@ -44,7 +44,11 @@ class Database:
         metadata = MetaData(self._engine)
         for table_name in database_tables:
             if table_name not in self._engine.table_names():
-                Table(table_name, metadata,
+                Table(table_name,
+                      metadata,
+                      comment=f"{database_tables[table_name].description}:\n"
+                              f"source:{database_tables[table_name].source}\n"
+                              f"frequency:{database_tables[table_name].frequency}",
                       *tuple(Column(column.name,
                                     column.datatype,
                                     primary_key=column.is_primary_key,
