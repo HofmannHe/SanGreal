@@ -26,6 +26,7 @@ RUN apt-get update && \
     pip3 install sqlalchemy sqlalchemy_utils psycopg2-binary && \
     pip3 install numpy pandas  && \
     pip3 install tushare && \
+    pip3 install tenacity && \
     apt-get --purge remove -y gcc make axel python3-dev default-libmysqlclient-dev libxml2-dev && \
     rm -rf /root/.cache/* && apt-get clean && apt-get autoremove -y
 
