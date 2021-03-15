@@ -47,7 +47,8 @@ class Database:
                 Table(table_name, metadata,
                       *tuple(Column(column.name,
                                     column.datatype,
-                                    primary_key=column.is_primary_key) for column in
+                                    primary_key=column.is_primary_key,
+                                    comment=column.description) for column in
                              database_tables[table_name].columns))
         metadata.create_all()
 
