@@ -1,8 +1,13 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
+from datetime import time
 from dataclasses import dataclass, is_dataclass
-from typing import List, Dict
-from sqlalchemy.types import TypeEngine, Integer, String, Date, Unicode, Numeric, CHAR
+from typing import List
+from sqlalchemy.types import Integer, String, Date, Unicode, Numeric, CHAR
+from sqlalchemy import Column
+from functools import partial
+
+DefaultColumn = partial(Column, nullable=False)
 
 
 def nested_dataclass(*args, **kwargs):
@@ -25,47 +30,62 @@ def nested_dataclass(*args, **kwargs):
 
 
 @nested_dataclass(frozen=True, eq=False)
-class DataColumn:
-    """数据类，用于存放列属性"""
-    name: str
-    description: str
-    datatype: TypeEngine
-    is_primary_key: bool = False
-
-
-@nested_dataclass(frozen=True, eq=False)
 class DataTable:
     """数据类，用于存放表结构"""
     description: str
-    source: str
+    reference: str
     frequency: str
-    columns: List[DataColumn]
+    update_time: time
+    columns: List[Column]
 
 
-database_tables = {
-    'tushare_stock_daily': DataTable(description='股市日线数据',
-                                     source='tushare',
-                                     frequency='daily',
-                                     columns=[
-                                         DataColumn('date', '日期', Date, is_primary_key=True),
-                                         DataColumn('code', '代码', String(16), is_primary_key=True),
-                                         DataColumn('market', '市场', String(16), is_primary_key=True),
-                                         DataColumn('name', '名称', Unicode),
-                                         DataColumn('change_percent', '涨跌幅', Numeric(10, 4)),
-                                         DataColumn('trade', '现价', Numeric(10, 2)),
-                                         DataColumn('open', '开盘价', Numeric(10, 2)),
-                                         DataColumn('high', '最高价', Numeric(10, 2)),
-                                         DataColumn('low', '最低价', Numeric(10, 2)),
-                                         DataColumn('adjust_before', '复权因子', Numeric(10, 3)),
-                                         DataColumn('settlement', '昨日收盘价', Numeric(10, 2)),
-                                         DataColumn('volume', '成交量', Integer),
-                                         DataColumn('turnover_ratio', '换手率', Numeric(10, 4)),
-                                         DataColumn('amount', '成交额', Numeric(10, 2)),
-                                         DataColumn('per', '市盈率', Numeric(10, 4)),
-                                         DataColumn('pb', '市净率', Numeric(10, 4)),
-                                         DataColumn('market_cap', '总市值', Numeric(10, 2)),
-                                         DataColumn('nmc', '流通市值', Numeric(10, 2)), ],
-                                     )}
+data_sources = {
+    'tushare.pro_api.daily':
+        DataTable(description='股市日线数据',
+                  reference='https://tushare.pro/document/2?doc_id=27',
+                  frequency='daily',
+                  update_time=time.fromisoformat('17:30:00+08:00'),
+                  columns=[
+                      DefaultColumn('ts_code', String(16), comment='股票代码', primary_key=True),
+                      DefaultColumn('trade_date', Date, comment='交易日期', primary_key=True),
+                      DefaultColumn('open', Numeric(10, 2), comment='开盘价'),
+                      DefaultColumn('high', Numeric(10, 2), comment='最高价'),
+                      DefaultColumn('low', Numeric(10, 2), comment='最低价'),
+                      DefaultColumn('close', Numeric(10, 2), comment='收盘价'),
+                      DefaultColumn('pre_close', Numeric(10, 2), comment='昨收价'),
+                      DefaultColumn('change', Numeric(10, 2), comment='涨跌额（未复权）'),
+                      DefaultColumn('pct_chg', Numeric(10, 4), comment='涨跌幅（未复权）'),
+                      DefaultColumn('vol', Integer, comment='成交量（手）'),
+                      DefaultColumn('amount', Numeric(12, 3), comment='成交额（千元）'),
+                  ]
+                  )
+}
+
+# data_sources = {
+#     'tushare.pro_api.daily':
+#         DataTable(description='股市日线数据',
+#                   frequency='daily',
+#                   update_time=time.fromisoformat('17:30:00+08:00'),
+#                   columns=[
+#                       DataColumn('date', '日期', Date, is_primary_key=True),
+#                       DataColumn('code', '代码', String(16), is_primary_key=True),
+#                       DataColumn('market', '市场', String(16), is_primary_key=True),
+#                       DataColumn('name', '名称', Unicode),
+#                       DataColumn('change_percent', '涨跌幅', Numeric(10, 4)),
+#                       DataColumn('trade', '现价', Numeric(10, 2)),
+#                       DataColumn('open', '开盘价', Numeric(10, 2)),
+#                       DataColumn('high', '最高价', Numeric(10, 2)),
+#                       DataColumn('low', '最低价', Numeric(10, 2)),
+#                       DataColumn('adjust_before', '复权因子', Numeric(10, 3)),
+#                       DataColumn('settlement', '昨日收盘价', Numeric(10, 2)),
+#                       DataColumn('volume', '成交量', Integer),
+#                       DataColumn('turnover_ratio', '换手率', Numeric(10, 4)),
+#                       DataColumn('amount', '成交额', Numeric(10, 2)),
+#                       DataColumn('per', '市盈率', Numeric(10, 4)),
+#                       DataColumn('pb', '市净率', Numeric(10, 4)),
+#                       DataColumn('market_cap', '总市值', Numeric(10, 2)),
+#                       DataColumn('nmc', '流通市值', Numeric(10, 2)), ],
+#                   )}
 
 # STOCK_WEB_DATA_LIST.append(
 #     StockWebData(

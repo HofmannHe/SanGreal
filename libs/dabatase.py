@@ -7,15 +7,14 @@ import os
 import pandas as pd
 import platform
 import sys
-import time
 import traceback
 import tushare as ts
-from sqlalchemy import inspect, create_engine
-from sqlalchemy import MetaData, Table, Column
-from sqlalchemy.types import NVARCHAR, Integer, String
+from sqlalchemy import create_engine
+from sqlalchemy import select
+from sqlalchemy import MetaData, Table
 from sqlalchemy_utils import database_exists, create_database
 
-from libs.data_dicts import database_tables
+from libs.data_dicts import data_sources
 
 
 class Database:
@@ -42,25 +41,48 @@ class Database:
         self._engine = create_engine(self._DB_CONN_STR)
 
         metadata = MetaData(self._engine)
-        for table_name in database_tables:
+        for table_name in data_sources:
             if table_name not in self._engine.table_names():
                 Table(table_name,
                       metadata,
-                      comment=f"{database_tables[table_name].description}:\n"
-                              f"source:{database_tables[table_name].source}\n"
-                              f"frequency:{database_tables[table_name].frequency}",
-                      *tuple(Column(column.name,
-                                    column.datatype,
-                                    primary_key=column.is_primary_key,
-                                    comment=column.description) for column in
-                             database_tables[table_name].columns))
+                      comment=f"{data_sources[table_name].description}:\n"
+                              f"reference:{data_sources[table_name].reference}\n"
+                              f"frequency:{data_sources[table_name].frequency}\n"
+                              f"update_time:{data_sources[table_name].update_time}",
+                      *tuple(column for column in data_sources[table_name].columns),
+                      )
         metadata.create_all()
 
     def engine(self):
         engine = create_engine(
             self._DB_CONN_STR,
-            encoding='utf8', convert_unicode=True)
+            encoding='utf8',
+            convert_unicode=True)
         return engine
+
+    def insert(self,
+               dataframe,
+               table_name):
+        dataframe.to_sql(table_name,
+                         self._engine,
+                         if_exists='append',
+                         index=False)
+
+    def select(self, table_name, ts_code=None, start_date=None, end_date=None):
+        metadata = MetaData(self._engine, reflect=True)
+        table = metadata.tables[table_name]
+        s = select([table])
+
+        if ts_code is not None:
+            s = s.where(table.c.ts_code == ts_code)
+
+        if start_date is not None:
+            s = s.where(table.c.trade_date >= start_date)
+
+        if end_date is not None:
+            s = s.where(table.c.trade_date <= end_date)
+
+        return pd.read_sql_query(s, self._DB_CONN_STR, parse_dates='trade_date')
 
 
 # def insert(data, database, table_name, write_index, primary_keys):
@@ -126,4 +148,4 @@ class Database:
 
 
 if __name__ == "__main__":
-    test = Database()
+    database = Database()
