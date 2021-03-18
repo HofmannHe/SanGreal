@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 # -*- coding: utf-8 -*-
 
-import datetime
+from datetime import datetime
 import logging
 import os
 import pandas as pd
@@ -10,7 +10,7 @@ import sys
 import traceback
 import tushare as ts
 from sqlalchemy import create_engine
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy import MetaData, Table
 from sqlalchemy_utils import database_exists, create_database
 
@@ -68,16 +68,20 @@ class Database:
                          if_exists='append',
                          index=False)
 
-    def select(self, table_name, ts_code=None, start_date=None, end_date=None):
+    def select(self, table_name, count=False, ts_code=None, start_date=None, end_date=None):
         metadata = MetaData(self._engine, reflect=True)
         table = metadata.tables[table_name]
-        s = select([table])
+        if count==True:
+            s = select([func.count()]).select_from(table)
+        else:
+            s = select([table])
 
         if ts_code is not None:
             s = s.where(table.c.ts_code == ts_code)
 
         if start_date is not None:
-            s = s.where(table.c.trade_date >= start_date)
+            s = s.where(table.c.trade_date >= start_date
+)
 
         if end_date is not None:
             s = s.where(table.c.trade_date <= end_date)

@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 from datetime import time
 from dataclasses import dataclass, is_dataclass
-from typing import List
+from typing import List, Callable
 from sqlalchemy.types import Integer, String, Date, Unicode, Numeric, CHAR
 from sqlalchemy import Column
 from functools import partial
+import tushare as ts
 
 DefaultColumn = partial(Column, nullable=False)
-
+pro = ts.pro_api()
 
 def nested_dataclass(*args, **kwargs):
     def wrapper(cls):
@@ -35,6 +36,7 @@ class DataTable:
     description: str
     reference: str
     frequency: str
+    data_source: Callable
     update_time: time
     columns: List[Column]
 
@@ -44,6 +46,7 @@ data_sources = {
         DataTable(description='股市日线数据',
                   reference='https://tushare.pro/document/2?doc_id=27',
                   frequency='daily',
+                  data_source=pro.daily,
                   update_time=time.fromisoformat('17:30:00+08:00'),
                   columns=[
                       DefaultColumn('ts_code', String(16), comment='股票代码', primary_key=True),
