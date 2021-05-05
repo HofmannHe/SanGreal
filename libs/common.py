@@ -3,131 +3,14 @@
 
 import datetime
 import os
-import pandas as pd
-import platform
 import sys
 import time
 import traceback
+
+import pandas as pd
 import tushare as ts
 from sqlalchemy import inspect, create_engine
 from sqlalchemy.types import NVARCHAR
-
-# 使用环境变量获得数据库。兼容开发模式可docker模式。
-DB_TYPE = os.environ.get('DB_TYPE') if (os.environ.get('DB_TYPE') != None) else "postgresql"
-DB_ENGINE = os.environ.get('DB_ENGINE') if (os.environ.get('DB_ENGINE') != None) else "psycopg2"
-DB_HOST = os.environ.get('DB_HOST') if (os.environ.get('DB_HOST') != None) else "database"
-DB_PORT = os.environ.get('DB_PORT') if (os.environ.get('DB_PORT') != None) else "5432"
-DB_USER = os.environ.get('DB_USER') if (os.environ.get('DB_USER') != None) else "root"
-DB_PASSWORD = os.environ.get('DB_PASSWORD') if (os.environ.get('DB_PASSWORD') != None) else "password"
-DB_DATABASE = os.environ.get('DB_DATABASE') if (os.environ.get('DB_DATABASE') != None) else "stock_data"
-
-print(f"DB_TYPE :{DB_TYPE}, DB_ENGINE :{DB_ENGINE}, DB_HOST :{DB_HOST}, DB_USER :{DB_USER}, DB_DATABASE :{DB_DATABASE}")
-DB_CONN_URL = f"{DB_TYPE}+{DB_ENGINE}://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}?charset=utf8"
-print("DB_CONN_URL :", DB_CONN_URL)
-
-
-# 定义 获得 token 方法
-def get_tushare_token():
-    tushare_token = os.environ.get('TUSHARE_TOKEN')
-    if tushare_token != None:
-        return tushare_token
-    else:
-        return ""
-
-
-def engine():
-    engine = create_engine(
-        MYSQL_CONN_URL,
-        encoding='utf8', convert_unicode=True)
-    return engine
-
-
-def engine_to_db(to_db):
-    MYSQL_CONN_URL_NEW = "mysql+mysqldb://" + MYSQL_USER + ":" + MYSQL_PWD + "@" + MYSQL_HOST + ":3306/" + to_db + "?charset=utf8"
-    engine = create_engine(
-        MYSQL_CONN_URL_NEW,
-        encoding='utf8', convert_unicode=True)
-    return engine
-
-
-# 通过数据库链接 engine。
-def conn():
-    try:
-        db = MySQLdb.connect(MYSQL_HOST, MYSQL_USER, MYSQL_PWD, MYSQL_DB, charset="utf8")
-        # db.autocommit = True
-    except Exception as e:
-        print("conn error :", e)
-    db.autocommit(on=True)
-    return db.cursor()
-
-
-# 定义通用方法函数，插入数据库表，并创建数据库主键，保证重跑数据的时候索引唯一。
-def insert_db(data, table_name, write_index, primary_keys):
-    # 插入默认的数据库。
-    insert_other_db(MYSQL_DB, data, table_name, write_index, primary_keys)
-
-
-# 增加一个插入到其他数据库的方法。
-def insert_other_db(to_db, data, table_name, write_index, primary_keys):
-    # 定义engine
-    engine_mysql = engine_to_db(to_db)
-    # 使用 http://docs.sqlalchemy.org/en/latest/core/reflection.html
-    # 使用检查检查数据库表是否有主键。
-    insp = inspect(engine_mysql)
-    col_name_list = data.columns.tolist()
-    # 如果有索引，把索引增加到varchar上面。
-    if write_index:
-        # 插入到第一个位置：
-        col_name_list.insert(0, data.index.name)
-    print(col_name_list)
-    data.to_sql(name=table_name, con=engine_mysql, schema=to_db, if_exists='append',
-                dtype={col_name: NVARCHAR(length=255) for col_name in col_name_list}, index=write_index)
-    # 判断是否存在主键
-    if insp.get_primary_keys(table_name) == []:
-        with engine_mysql.connect() as con:
-            # 执行数据库插入数据。
-            try:
-                con.execute('ALTER TABLE `%s` ADD PRIMARY KEY (%s);' % (table_name, primary_keys))
-            except  Exception as e:
-                print("################## ADD PRIMARY KEY ERROR :", e)
-
-
-# 插入数据。
-def insert(sql, params=()):
-    with conn() as db:
-        print("insert sql:" + sql)
-        try:
-            db.execute(sql, params)
-        except  Exception as e:
-            print("error :", e)
-
-
-# 查询数据
-def select(sql, params=()):
-    with conn() as db:
-        print("select sql:" + sql)
-        try:
-            db.execute(sql, params)
-        except  Exception as e:
-            print("error :", e)
-        result = db.fetchall()
-        return result
-
-
-# 计算数量
-def select_count(sql, params=()):
-    with conn() as db:
-        print("select sql:" + sql)
-        try:
-            db.execute(sql, params)
-        except  Exception as e:
-            print("error :", e)
-        result = db.fetchall()
-        # 只有一个数组中的第一个数据
-        if len(result) == 1:
-            return int(result[0][0])
-        else:
-            return 0
 
 
 # 通用函数。获得日期参数。
